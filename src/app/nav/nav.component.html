@@ -1,7 +1,7 @@
 <header id="header" class="bg-secondary">
     <nav class="container mx-auto flex justify-start items-center py-8 px-4">
       <!-- App Name -->
-      <a class="text-3xl text-indigo-400 font-bold uppercase mr-4" href="index.html">Clipz</a>
+      <a class="text-3xl text-indigo-400 font-bold uppercase mr-4" routerLink="/">Clipz</a>
   
       <div class="flex flex-grow items-center">
         <!-- Primary Navigation -->
@@ -11,22 +11,23 @@
             <a class="px-2" href="#" (click)="OpenModal($event)">Login / Register</a>
           </li>
           <ng-template #authLinks>
-            <li>
-              <a class="px-2" href="#">Manage</a>
+            <li routerLinkActive="text-indigo-400"
+                [routerLinkActiveOptions]="{exact: true}"
+            >
+              <a class="px-2" routerLink='/manage' href="">Manage</a>
             </li>
-            <li>
-              <a class="px-2" href="#">Upload</a>
+            <li routerLinkActive="text-indigo-400"
+              [routerLinkActiveOptions]="{exact: true}"
+            >
+              <a class="px-2" routerLink="/uploads">Upload</a>
             </li>
           </ng-template> 
-          <li>
-            <a class="px-2" href="about.html">About</a>
+          <li routerLinkActive="text-indigo-400">
+            <a class="px-2" routerLink='/about'>About</a>
           </li>
 
-          <!-- <li *ngIf="!(auth.isAuthenticated$ | async)>
-            <a class="px-2" href="#" (click)="logOut($event)">Log Out</a>
-          </li> -->
           <li *ngIf="auth.isAuthenticated$ | async">
-            <a class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded justify-end" href="#" (click)="logOut($event)">Log Out</a>
+            <a class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded justify-end" href="#" (click)="auth.logOut($event)">Log Out</a>
           </li>
         </ul>
         <!-- Language Switcher -->
