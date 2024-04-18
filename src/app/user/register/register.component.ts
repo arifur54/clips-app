@@ -16,7 +16,7 @@ export class RegisterComponent{
     private auth: AuthService,
     private emailTaken : Emailtaken
   ) {
-    console.log("Hola", this.emailTaken.validate)
+   
   }
 
   inSubmission = false;
