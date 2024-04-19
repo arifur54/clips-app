@@ -1,18 +1,19 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
-import { AngularFireStorage } from '@angular/fire/compat/storage';
+import { AngularFireStorage, AngularFireUploadTask } from '@angular/fire/compat/storage';
 import {v4 as uuid} from 'uuid';
-import {last, switchMap} from 'rxjs/operators';
+import {last, switchMap, timestamp} from 'rxjs/operators';
 import { AngularFireAuth } from '@angular/fire/compat/auth';
 import firebase from 'firebase/compat/app'
 import { ClipService } from 'src/app/services/clip.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-uploads',
   templateUrl: './uploads.component.html',
   styleUrls: ['./uploads.component.css']
 })
-export class UploadsComponent implements OnInit {
+export class UploadsComponent implements OnDestroy {
 
   isDragOver: boolean = false;
   file: File | null = null;
@@ -25,16 +26,19 @@ export class UploadsComponent implements OnInit {
   percentage = 0;
   showPercentage = false;
   user: firebase.User | null = null 
+  task?: AngularFireUploadTask
 
   constructor(
     private storage: AngularFireStorage,
     private auth: AngularFireAuth,
-    private clipsService: ClipService
+    private clipsService: ClipService,
+    private router: Router
   ) {
     auth.user.subscribe(user => this.user = user)
    }
 
-  ngOnInit(): void {
+  ngOnDestroy(): void {
+    this.task?.cancel();
   }
 
   title = new FormControl('',
@@ -49,7 +53,9 @@ export class UploadsComponent implements OnInit {
   storeFile($event: Event) {
     this.isDragOver = false
 
-    this.file = ($event as DragEvent).dataTransfer?.files.item(0) ?? null;
+    this.file = ($event as DragEvent).dataTransfer ?
+    ($event as DragEvent).dataTransfer?.files.item(0) ?? null :
+    ($event.target as HTMLInputElement).files?.item(0) ?? null
 
     if(!this.file || this.file.type !== 'video/mp4'){
       return
@@ -74,26 +80,33 @@ export class UploadsComponent implements OnInit {
     const clipFileName = uuid()
     const clipPath = `clips/${clipFileName}.mp4`;
 
-    const task = this.storage.upload(clipPath, this.file);
+    this.task = this.storage.upload(clipPath, this.file);
     const clipRef = this.storage.ref(clipPath)
-    task.percentageChanges().subscribe(progress => {
+    this.task.percentageChanges().subscribe(progress => {
       this.percentage = progress as number / 100
     })
 
-    task.snapshotChanges().pipe(
+    this.task.snapshotChanges().pipe(
       last(),
       switchMap(() => clipRef.getDownloadURL())
     ).subscribe({
-      next: (url) => {
+      next: async (url) => {
         const clip = {
           uid: this.user?.uid as string,
           displayName: this.user?.displayName as string,
           title: this.title.value,
           fileName: `${clipFileName}.mp4`,
-          url
+          url,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
         }
 
-        this.clipsService.createClip(clip);
+        const clipDocRef = await this.clipsService.createClip(clip);
+
+        setTimeout(() => {
+          this.router.navigate([
+            'clip', clipDocRef.id
+          ])
+        }, 1000)
 
         this.alertColor = 'green'
         this.alertMsg =  'Success! Your Clip has been uploaded'
