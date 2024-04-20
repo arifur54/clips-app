@@ -13,6 +13,8 @@ export class ManageComponent implements OnInit {
 
   videoOrder = '1'
   clips: IClip[] = [];
+  activeClip: IClip | null = null;
+
 
   constructor(
     public router: Router, 
@@ -26,6 +28,11 @@ export class ManageComponent implements OnInit {
       this.videoOrder = params.sort === '2' ? params.sort : 1;
     });
 
+    this.updateClipsData();
+  
+  }
+
+  updateClipsData():void {
     this.clipService.getUserClips().subscribe(docs => {
       this.clips = [];
       docs.forEach(doc => {
@@ -50,8 +57,30 @@ export class ManageComponent implements OnInit {
 
   openModal($event: Event, clip: IClip){
     $event.preventDefault();
+
+    this.activeClip = clip;
     this.modal.toggleModal('editClip')
     
+  }
+
+  update($event: IClip){
+    this.clips.forEach((element, index) => {
+      if(element.docID == $event.docID) {
+        this.clips[index].title = $event.title
+      }
+    })
+  }
+
+  async deleteClip($event: Event, clip: IClip){
+    $event.preventDefault()
+
+    try {
+      await this.clipService.deleteClip(clip.docID);
+      this.updateClipsData();
+    } catch (error) {
+      console.log(error)
+    }
+
   }
 
 }
