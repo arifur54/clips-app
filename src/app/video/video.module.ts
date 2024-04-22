@@ -7,6 +7,7 @@ import { UploadsComponent } from './uploads/uploads.component';
 import { SharedModule } from '../shared/shared.module';
 import { ReactiveFormsModule } from '@angular/forms';
 import { EditComponent } from './edit/edit.component';
+import { SafeURLPipe } from './pipe/safe-url.pipe';
 
 
 @NgModule({
@@ -14,6 +15,7 @@ import { EditComponent } from './edit/edit.component';
     ManageComponent,
     UploadsComponent,
     EditComponent,
+    SafeURLPipe,
   
   ],
   imports: [

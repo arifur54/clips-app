@@ -7,6 +7,9 @@ import { AngularFireAuth } from '@angular/fire/compat/auth';
 import firebase from 'firebase/compat/app'
 import { ClipService } from 'src/app/services/clip.service';
 import { Router } from '@angular/router';
+import { FfmpegService } from 'src/app/services/ffmpeg.service';
+
+
 
 @Component({
   selector: 'app-uploads',
@@ -25,16 +28,20 @@ export class UploadsComponent implements OnDestroy {
   alertColor = '';
   percentage = 0;
   showPercentage = false;
-  user: firebase.User | null = null 
-  task?: AngularFireUploadTask
+  user: firebase.User | null = null ;
+  task?: AngularFireUploadTask;
+  screenshots: string[] = [];
+  selectedScreenShot = '';
 
   constructor(
     private storage: AngularFireStorage,
     private auth: AngularFireAuth,
     private clipsService: ClipService,
-    private router: Router
+    private router: Router,
+    public ffmpegService: FfmpegService
   ) {
-    auth.user.subscribe(user => this.user = user)
+    auth.user.subscribe(user => this.user = user);
+    this.ffmpegService.init();
    }
 
   ngOnDestroy(): void {
@@ -50,7 +57,12 @@ export class UploadsComponent implements OnDestroy {
     title: this.title
   })
 
-  storeFile($event: Event) {
+  async storeFile($event: Event) {
+    if(this.ffmpegService.isRunning){
+      return;
+    }
+
+
     this.isDragOver = false
 
     this.file = ($event as DragEvent).dataTransfer ?
@@ -61,6 +73,10 @@ export class UploadsComponent implements OnDestroy {
       return
     }
     
+    this.screenshots = await this.ffmpegService.getScreenShots(this.file);
+
+    this.selectedScreenShot = this.selectedScreenShot[0];
+
     this.title.setValue(
       this.file.name.replace(/\.[^/.]+$/, '')
     );
